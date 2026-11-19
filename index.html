@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Reserva de pistas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: cabecera tipo pista, selector de fines de semana en pestañas, rejilla de franjas, barra fija con el envío */
+:root{
+  --bg:#f2f7f6; --panel:#ffffff; --fg:#14323a; --muted:#5a7378; --line:#d4e3e1;
+  --court:#1f6f6b; --court2:#2a8a84; --sky:#2f6fa8; --chip:#e3f1ef; --sel:#1f6f6b; --selfg:#ffffff;
+  --full:#e7ecee; --fullfg:#8a9a9e; --ok:#2b8a52;
+  --display:"Space Grotesk",ui-sans-serif,system-ui,sans-serif;
+  --text:"Inter",ui-sans-serif,system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1d21; --panel:#14282d; --fg:#e4f0ee; --muted:#93acb0; --line:#24414a;
+  --court:#2a9d95; --court2:#1f7a74; --sky:#5a9bd6; --chip:#17363b; --sel:#2fb3aa; --selfg:#05211f;
+  --full:#1a2c31; --fullfg:#5f777c; --ok:#4cc27e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1d21; --panel:#14282d; --fg:#e4f0ee; --muted:#93acb0; --line:#24414a;
+  --court:#2a9d95; --court2:#1f7a74; --sky:#5a9bd6; --chip:#17363b; --sel:#2fb3aa; --selfg:#05211f;
+  --full:#1a2c31; --fullfg:#5f777c; --ok:#4cc27e; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--text);font-size:15px;line-height:1.45;margin:0;padding-bottom:140px}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{background:var(--court);color:#fff;position:relative;overflow:hidden}
+header .wrap{padding-block:26px 22px;position:relative;z-index:1}
+header svg{position:absolute;inset:0;width:100%;height:100%;opacity:.18}
+h1{font-family:var(--display);font-size:clamp(26px,6vw,36px);margin:0 0 6px;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:0;max-width:52ch;opacity:.92}
+.pasos{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.pasos span{background:rgba(255,255,255,.16);border-radius:999px;padding:4px 10px;font-size:13px}
+.tabs{display:flex;gap:8px;margin:18px 0 6px;overflow-x:auto;padding-bottom:2px}
+.tab{flex:1;min-width:150px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:12px;padding:10px 12px;text-align:left;cursor:pointer;font:inherit}
+.tab b{display:block;font-family:var(--display);font-size:16px}
+.tab small{color:var(--muted)}
+.tab[aria-selected="true"]{border-color:var(--court);box-shadow:inset 0 0 0 1px var(--court)}
+.tab .n{float:right;background:var(--court);color:#fff;border-radius:999px;font-size:12px;padding:0 7px;line-height:20px}
+.dia{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px}
+.dia h2{font-family:var(--display);font-size:18px;margin:0 0 2px;display:flex;align-items:baseline;gap:8px}
+.dia h2 small{font-family:var(--text);font-size:13px;color:var(--muted);font-weight:500}
+.franjas{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px}
+.f{border:1.5px solid var(--line);background:var(--chip);color:var(--fg);border-radius:10px;padding:10px;text-align:left;cursor:pointer;font:inherit;min-height:64px;display:flex;flex-direction:column;gap:3px}
+.f .h{font-family:var(--display);font-weight:700;font-size:17px;font-variant-numeric:tabular-nums}
+.f .e{font-size:12.5px;color:var(--muted)}
+.f[aria-pressed="true"]{background:var(--sel);border-color:var(--sel);color:var(--selfg)}
+.f[aria-pressed="true"] .e{color:var(--selfg);opacity:.9}
+.f.llena{background:var(--full);color:var(--fullfg);cursor:not-allowed}
+.f:focus-visible,.tab:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+.grupos{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:4px}
+.grupos li{font-size:11.5px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:1px 8px;display:flex;gap:4px;align-items:center}
+.grupos button{border:0;background:none;color:var(--muted);cursor:pointer;padding:0 0 0 2px;font-size:13px}
+.barra{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+.barra .wrap{padding-block:12px;display:flex;flex-direction:column;gap:8px}
+.fila{display:flex;gap:8px;flex-wrap:wrap}
+.fila input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:10px;padding:10px 12px;font:inherit}
+.fila input.peq{flex:0 0 96px}
+.btn{border:0;border-radius:10px;padding:11px 16px;font:600 15px var(--text);cursor:pointer;background:var(--court);color:#fff;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.sec{background:var(--chip);color:var(--fg)}
+.btn[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.resumen{font-size:13px;color:var(--muted)}
+.resumen b{color:var(--fg)}
+.aviso{font-size:13px;color:var(--muted);margin:14px 0 0}
+.msg{font-size:13px;background:var(--chip);border-radius:10px;padding:8px 10px;white-space:pre-wrap;display:none}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:6}
+.toast.on{opacity:1}
+.aviso.mal{color:#a8572b}
+.btn[disabled]{opacity:.45;cursor:default}
+.msg.ok{background:#dff3e6;color:#1d5c37}.msg.ko{background:#f6e7df;color:#7a3a1a}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head><body>
+<header>
+  <svg viewBox="0 0 400 200" preserveAspectRatio="none" aria-hidden="true">
+    <rect x="20" y="20" width="360" height="160" fill="none" stroke="#fff" stroke-width="3"/>
+    <line x1="200" y1="20" x2="200" y2="180" stroke="#fff" stroke-width="4"/>
+    <line x1="80" y1="20" x2="80" y2="180" stroke="#fff" stroke-width="2"/>
+    <line x1="320" y1="20" x2="320" y2="180" stroke="#fff" stroke-width="2"/>
+    <line x1="80" y1="100" x2="320" y2="100" stroke="#fff" stroke-width="2"/>
+  </svg>
+  <div class="wrap">
+    <h1>Reserva de pistas</h1>
+    <p>Elige las horas que mejor le vengan a tu grupo y resérvalas al momento.</p>
+    <div class="pasos"><span>1 · Toca una o varias franjas</span><span>2 · Pon el nombre del grupo</span><span>3 · Pulsa «Reservar»</span></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div id="dias"></div>
+  <p class="aviso">Viernes de 17:00 a 21:00 y sábados de 10:00 a 14:00, en franjas de 1 hora. Hay una sola pista por franja: como mucho 2 franjas por grupo, contando las que ya tenga.</p>
+  <p class="aviso" id="estado" role="status">Comprobando qué franjas están libres…</p>
+</main>
+
+<div class="barra">
+  <div class="wrap">
+    <div class="resumen" id="resumen">Toca las franjas que os vengan bien.</div>
+    <div class="fila">
+      <input id="grupo" placeholder="Nombre del grupo" autocomplete="off" maxlength="60" aria-label="Nombre del grupo">
+      <input id="personas" class="peq" type="number" inputmode="numeric" min="1" max="8" placeholder="Nº pers." aria-label="Número de personas (1 a 8)">
+    </div>
+    <div class="fila">
+      <button class="btn" id="reservar" type="button" disabled style="flex:1">Reservar</button>
+      <a class="btn sec" id="wa" href="#" target="_blank" rel="noopener" aria-disabled="true">Avisar por WhatsApp</a>
+      <button class="btn sec" id="copiar" type="button" aria-disabled="true">Copiar</button>
+    </div>
+    <div class="msg" id="msg" role="status"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const FINDES=[
+  {id:"s1",nombre:"27–28 nov",dias:[{f:"2026-11-27",t:"Viernes 27 nov",h:[17,18,19,20]},{f:"2026-11-28",t:"Sábado 28 nov",h:[10,11,12,13]}]},
+  {id:"s2",nombre:"4–5 dic",dias:[{f:"2026-12-04",t:"Viernes 4 dic",h:[17,18,19,20]},{f:"2026-12-05",t:"Sábado 5 dic",h:[10,11,12,13]}]},
+  {id:"s3",nombre:"11–12 dic",dias:[{f:"2026-12-11",t:"Viernes 11 dic",h:[17,18,19,20]},{f:"2026-12-12",t:"Sábado 12 dic",h:[10,11,12,13]}]}
+];
+// Tope por grupo (lo comprueba también CoachIn): 2 franjas; «Miércoles 19:00», 3.
+const norm=t=>String(t||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ");
+const maxSel=()=>norm($("grupo").value)==="miercoles 19:00"?3:2;
+// Conexión pública con CoachIn (clave anon: sólo puede llamar a las dos funciones de reserva).
+const CI_URL="https://cdyvvrgvcyfmpnopplko.supabase.co";
+const CI_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkeXZ2cmd2Y3lmbXBub3BwbGtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk3MzE5MzAsImV4cCI6MjA1NTMwNzkzMH0.hz6mBTAgkddBLzXFWOwlBqkaHcPHRIGZ1AsCnFFQGeY";
+// Respaldo si no hay conexión: franjas que ya se sabían cogidas.
+const RESERVAS=[
+  {franja:"2026-11-27_17"},{franja:"2026-11-27_19"},{franja:"2026-11-28_12"},
+  {franja:"2026-12-04_17"},{franja:"2026-12-11_17"}
+];
+const pad=n=>String(n).padStart(2,"0");
+const clave=(f,h)=>f+"_"+pad(h);
+const etiqueta=k=>{for(const s of FINDES)for(const d of s.dias)for(const h of d.h)if(clave(d.f,h)===k)return d.t+" · "+pad(h)+":00–"+pad(h+1)+":00";return k};
+let tab=FINDES[0].id, sel=new Set(), ocup=new Set(RESERVAS.map(r=>r.franja)), conectado=false, enviando=false, ultimo=null;
+try{const t=localStorage.getItem("tab");if(t&&FINDES.some(s=>s.id===t))tab=t}catch(e){}
+const $=id=>document.getElementById(id);
+
+async function rpc(nombre,cuerpo){
+  const r=await fetch(CI_URL+"/rest/v1/rpc/"+nombre,{method:"POST",
+    headers:{"apikey":CI_ANON,"Authorization":"Bearer "+CI_ANON,"Content-Type":"application/json"},
+    body:JSON.stringify(cuerpo||{})});
+  if(!r.ok)throw new Error("HTTP "+r.status);
+  return r.json();
+}
+async function cargar(){
+  try{
+    const filas=await rpc("reserva_pistas_ocupadas");
+    ocup=new Set(filas.map(x=>x.franja)); conectado=true;
+    $("estado").textContent="Conectado con CoachIn: lo que ves está al día."; $("estado").classList.remove("mal");
+  }catch(e){
+    conectado=false; ocup=new Set(RESERVAS.map(r=>r.franja));
+    $("estado").textContent="Sin conexión con CoachIn: enseño la última lista conocida y no se puede reservar. Avisa por WhatsApp.";
+    $("estado").classList.add("mal");
+  }
+  for(const k of [...sel])if(ocup.has(k))sel.delete(k);
+  render();
+}
+
+function render(){
+  $("tabs").innerHTML="";
+  for(const s of FINDES){
+    const n=s.dias.reduce((a,d)=>a+d.h.filter(h=>sel.has(clave(d.f,h))).length,0);
+    const b=document.createElement("button");
+    b.className="tab";b.setAttribute("role","tab");b.setAttribute("aria-selected",s.id===tab);
+    b.innerHTML=(n?`<span class="n">${n}</span>`:"")+`<b>${s.nombre}</b><small>Vie 17–21 · Sáb 10–14</small>`;
+    b.onclick=()=>{tab=s.id;try{localStorage.setItem("tab",tab)}catch(e){}render()};
+    $("tabs").appendChild(b);
+  }
+  const s=FINDES.find(x=>x.id===tab);
+  $("dias").innerHTML="";
+  for(const d of s.dias){
+    const box=document.createElement("section");box.className="dia";
+    box.innerHTML=`<h2>${d.t.split(" ")[0]} <small>${d.t.split(" ").slice(1).join(" ")}</small></h2>`;
+    const g=document.createElement("div");g.className="franjas";
+    for(const h of d.h){
+      const k=clave(d.f,h), llena=ocup.has(k);
+      const b=document.createElement("button");b.type="button";b.className="f"+(llena?" llena":"");
+      b.setAttribute("aria-pressed",sel.has(k)); if(llena)b.setAttribute("aria-disabled","true");
+      b.innerHTML=`<span class="h">${pad(h)}:00 – ${pad(h+1)}:00</span><span class="e">${llena?"Ocupada":"Libre"}</span>`;
+      b.onclick=()=>{if(llena)return;
+        if(sel.has(k))sel.delete(k);else{if(sel.size>=maxSel()){toast("Como mucho "+maxSel()+" franjas por grupo");return}sel.add(k)}
+        ultimo=null;render()};
+      g.appendChild(b);
+    }
+    box.appendChild(g);$("dias").appendChild(box);
+  }
+  actualizarBarra();
+}
+
+function datos(){const g=$("grupo").value.trim(), p=parseInt($("personas").value,10);return {g,p,pOk:p>=1&&p<=8}}
+function texto(){
+  const {g}=datos(), p=$("personas").value.trim();
+  const lineas=[...sel].sort().map(k=>"• "+etiqueta(k));
+  return `Reserva de pistas\nGrupo: ${g||"(sin nombre)"}${p?"\nPersonas: "+p:""}\nFranjas:\n${lineas.join("\n")}`;
+}
+function actualizarBarra(){
+  const n=sel.size,{g,pOk}=datos(), listo=n>0&&g.length>0, m=maxSel(), cabe=n<=m;
+  const falta=!n?"":!g?" · falta el nombre del grupo":!cabe?" · como mucho "+m+" franjas por grupo: quita "+(n-m):!pOk?" · pon cuántos sois (1 a 8)":"";
+  $("resumen").innerHTML=n?`<b>${n} franja${n>1?"s":""}</b> elegida${n>1?"s":""}${falta}`:"Toca las franjas que os vengan bien.";
+  $("reservar").disabled=!(listo&&pOk&&cabe&&conectado&&!enviando);
+  const t=listo?texto():ultimo;
+  $("wa").href=t?"https://wa.me/?text="+encodeURIComponent(t):"#";
+  $("wa").setAttribute("aria-disabled",!t);$("copiar").setAttribute("aria-disabled",!t);
+}
+function aviso(t,ok){const m=$("msg");m.style.display="block";m.className="msg "+(ok?"ok":"ko");m.textContent=t}
+function toast(t){const e=$("toast");e.textContent=t;e.classList.add("on");setTimeout(()=>e.classList.remove("on"),2200)}
+$("grupo").addEventListener("input",actualizarBarra);$("personas").addEventListener("input",actualizarBarra);
+$("copiar").onclick=()=>{const t=sel.size?texto():ultimo;if(!t)return;
+  navigator.clipboard.writeText(t).then(()=>toast("Copiado. Pégalo en WhatsApp")).catch(()=>{const m=$("msg");m.style.display="block";m.className="msg";m.textContent=t;
+    const r=document.createRange();r.selectNodeContents(m);const s=getSelection();s.removeAllRanges();s.addRange(r);toast("Selecciona y copia el texto")})};
+
+$("reservar").onclick=async()=>{
+  const {g,p,pOk}=datos(); if(!sel.size||!g||!pOk||sel.size>maxSel()||enviando)return;
+  enviando=true;$("reservar").textContent="Reservando…";actualizarBarra();
+  const franjas=[...sel].sort();
+  try{
+    const r=await rpc("reserva_pistas_reservar",{p_grupo:g,p_personas:p,p_franjas:franjas});
+    if(r&&r.ok){
+      aviso("Reservado para «"+g+"»:\n"+franjas.map(k=>"• "+etiqueta(k)).join("\n")+"\nSi quieres, avisa a Juan Carlos por WhatsApp.",true);
+      ultimo=texto().replace("Reserva de pistas","Reserva hecha en CoachIn"); sel.clear();
+    }else if(r&&r.ocupadas){
+      aviso((r.error||"No se ha reservado nada: ya están cogidas")+"\n"+r.ocupadas.map(k=>"• "+etiqueta(k)).join("\n")+"\nQuítalas y vuelve a pulsar «Reservar».",false);
+    }else aviso((r&&r.error)||"No se ha podido reservar.",false);
+  }catch(e){aviso("Sin conexión con CoachIn. No se ha reservado nada: avisa por WhatsApp.",false)}
+  enviando=false;$("reservar").textContent="Reservar";
+  await cargar();
+};
+
+render();
+cargar();
+// Las franjas que coge otro grupo desaparecen solas: se vuelve a mirar CoachIn cada 20 s y al volver a la página.
+setInterval(()=>{if(!enviando)cargar()},20000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!enviando)cargar()});
+window.addEventListener("focus",()=>{if(!enviando)cargar()});
+</script>
+</body></html>
